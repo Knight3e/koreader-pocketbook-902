@@ -1,0 +1,34 @@
+diff --git a/platform/pocketbook/koreader.app b/platform/pocketbook/koreader.app
+index 0a0f2fe..4968979 100755
+--- a/platform/pocketbook/koreader.app
++++ b/platform/pocketbook/koreader.app
+@@ -1,5 +1,12 @@
+ #!/bin/sh
+ 
++# PocketBook Pro 902 patch: the firmware may start us ("Open with", file association) with a minimal environment.
++export PATH="/bin:/sbin:/usr/bin:/usr/sbin:/ebrmain/bin${PATH:+:}${PATH}"
++# Log how we were started (kept small), to debug launches from the library: /mnt/ext1/koreader-launch.log
++PB902_LOG="/mnt/ext1/koreader-launch.log"
++if [ -f "${PB902_LOG}" ] && [ "$(wc -c <"${PB902_LOG}")" -gt 100000 ]; then mv -f "${PB902_LOG}" "${PB902_LOG}.old"; fi
++echo "$(date) start: \$0=${0} args=[$*] pwd=${PWD} uid=$(id -u) pidfile=[$(cat /tmp/koreader.pid 2>/dev/null)]" >>"${PB902_LOG}" 2>&1
++
+ # Work around PocketBook firmware 6.11.1480 rejecting executable-stack system libraries.
+ # See https://github.com/koreader/koreader/issues/15720#issuecomment-5059698020
+ export GLIBC_TUNABLES="${GLIBC_TUNABLES}${GLIBC_TUNABLES:+:}glibc.rtld.execstack=2"
+@@ -28,9 +35,14 @@ export KO_PATH_OPEN_BOOK="/tmp/.koreader.open"
+ 
+ # check for and notify a running instance
+ INSTANCE_PID=$(cat /tmp/koreader.pid 2>/dev/null)
+-if [ "${INSTANCE_PID}" != "" ] && [ -e "/proc/${INSTANCE_PID}" ]; then
++if [ "${INSTANCE_PID}" != "" ] && [ -e "/proc/${INSTANCE_PID}" ] && grep -q 'koreader.app' "/proc/${INSTANCE_PID}/cmdline" 2>/dev/null; then
+     echo "$@" >"${KO_PATH_OPEN_BOOK}"
+-    exec $(if [ -f "/usr/bin/iv2sh" ]; then echo /usr/bin/iv2sh; else echo /ebrmain/bin/iv2sh; fi) SetActiveTask "${INSTANCE_PID}" 0
++    IV2SH="$(if [ -f "/usr/bin/iv2sh" ]; then echo /usr/bin/iv2sh; else echo /ebrmain/bin/iv2sh; fi)"
++    if [ -x "${IV2SH}" ]; then
++        exec "${IV2SH}" SetActiveTask "${INSTANCE_PID}" 0
++    fi
++    echo "$(date) another instance is running (pid ${INSTANCE_PID}) and there is no iv2sh on this firmware" >>"${PB902_LOG}" 2>&1
++    exit 0
+ fi
+ 
+ # try to bring in raw device input (on rooted devices)

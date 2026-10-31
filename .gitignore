@@ -1,0 +1,7 @@
+work/
+out/
+*.zip
+*.tar.gz
+*.log
+.env
+*.dbg

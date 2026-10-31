@@ -1,0 +1,45 @@
+diff --git a/Makefile.defs b/Makefile.defs
+index c1dcdf8..6852bda 100644
+--- a/Makefile.defs
++++ b/Makefile.defs
+@@ -217,7 +217,8 @@ else ifeq ($(TARGET), win32)
+ 	WIN32=1
+ 	SDL=builtin
+ else ifeq ($(TARGET), pocketbook)
+-	CHOST?=arm-pocketbook-linux-gnueabi
++	# PocketBook Pro 902 patch: legacy ARMv6 toolchain by default
++	CHOST?=arm-kindle-linux-gnueabi
+ 	POCKETBOOK=1
+ 	HAS_POCKETBOOK_TC:=$(shell command -v arm-pocketbook-linux-gnueabi-gcc 2> /dev/null)
+ 	ifdef HAS_POCKETBOOK_TC
+@@ -509,10 +510,9 @@ else ifeq ($(TARGET), kobov5)
+ 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+ 	endif
+ else ifeq ($(TARGET), pocketbook)
+-	# NOTE: The TC itself is built in ARM mode (otherwise glibc 2.9 fails to build).
+-	#       We prefer Thumb mode for our own binaries, though, much like on every other i.MX device ;).
+-	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+-	TARGET_CFLAGS+=-mfloat-abi=softfp
++	# PocketBook Pro 902 patch: ARM1176 (ARMv6), measured on the device: no VFP, no NEON, no ARMv7 instructions.
++	# -> ARM mode, pure soft-float (no VFP instructions at all).
++	TARGET_CFLAGS:=-march=armv6 -mtune=arm1176jz-s -marm -mfloat-abi=soft
+ 	# NOTE: Because of course everything is terrible, newer FW (5.19+) use GCC 6.3.0's libstdc++,
+ 	#       so, ideally, we shouldn't be using this on those newer devices...
+ 	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
+diff --git a/ffi/inkview.lua b/ffi/inkview.lua
+index 0e919df..30a0e3c 100644
+--- a/ffi/inkview.lua
++++ b/ffi/inkview.lua
+@@ -13,6 +13,12 @@ if not version_major or not version_minor then
+     error("could not parse PocketBook software version: "..software_version)
+ end
+ local pocketbook_version = version_major * 100 + version_minor
++-- PocketBook Pro 902 patch: firmware 2.x reports e.g. "D902.2.1.3" (-> 201), older than anything KOReader knows.
++-- Use the oldest known definitions (5.05).
++if pocketbook_version < 505 then
++    print(string.format("PocketBook software version %d is older than 5.05, using the 5.05 definitions", pocketbook_version))
++    pocketbook_version = 505
++end
+ 
+ ffi.cdef('static const int POCKETBOOK_VERSION = ' .. pocketbook_version .. ';')
+ 
