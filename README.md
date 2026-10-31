@@ -19,9 +19,9 @@ A build kit and a few small patches that make [KOReader](https://github.com/kore
 
 - File browser: after scrolling, thin black "focus" underlines of earlier selections can stay on the screen (e-ink partial refresh).
 - Starting through "Open with" takes a few seconds longer than starting KOReader from the Applications menu.
-- Not tested: PDF, DjVu, CBZ, long reading sessions, battery life, sleep/standby behaviour.
-- Not supported by this hardware: touch, frontlight. Tilt sensor / auto-rotate is not implemented.
+- Not tested: PDF, DjVu, CBZ or other formats and pluggins but most should work easily.
 - Wi-Fi: connecting blocks the screen for a few seconds.
+- (Battery life seems to be alright but i havent really benchmarked it. Standby behavior seems to be also working for me on my Pocketbook 902 pro but i dont know how it will be on others)
 
 ## Install
 
