@@ -30,6 +30,7 @@ See [docs/INSTALL.md](docs/INSTALL.md). If a release zip exists on the Releases 
 ## Build it yourself
 
 Needs Linux x86_64 with Docker, about 25 GB of free disk and an internet connection.
+Clone the repo or download a form me prebuilt one from the releases. For the "Built yourself" just run: 
 
     bash build.sh
 
